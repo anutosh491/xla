@@ -21,6 +21,7 @@ limitations under the License.
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <vector>
 #include <type_traits>
 
 #include "absl/container/inlined_vector.h"
@@ -150,6 +151,10 @@ const npy_intp* nb_numpy_ndarray::shape() const {
   return PyArray_SHAPE(self);
 }
 
+std::vector<int64_t> nb_numpy_ndarray::shape_as_int64() const {
+  return std::vector<int64_t>(shape(), shape() + ndim());
+}
+
 npy_intp nb_numpy_ndarray::shape(npy_intp dim) const {
   PyArrayObject* self = reinterpret_cast<PyArrayObject*>(ptr());
   if (dim < 0 || dim >= PyArray_NDIM(self)) {
@@ -161,6 +166,10 @@ npy_intp nb_numpy_ndarray::shape(npy_intp dim) const {
 const npy_intp* nb_numpy_ndarray::strides() const {
   PyArrayObject* self = reinterpret_cast<PyArrayObject*>(ptr());
   return PyArray_STRIDES(self);
+}
+
+std::vector<int64_t> nb_numpy_ndarray::strides_as_int64() const {
+  return std::vector<int64_t>(strides(), strides() + ndim());
 }
 
 npy_intp nb_numpy_ndarray::strides(npy_intp dim) const {

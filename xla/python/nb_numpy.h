@@ -26,6 +26,7 @@ limitations under the License.
 
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -93,8 +94,10 @@ class nb_numpy_ndarray : public nanobind::object {
   nb_dtype dtype() const;
   npy_intp ndim() const;
   const npy_intp* shape() const;
+  std::vector<int64_t> shape_as_int64() const;
   npy_intp shape(npy_intp dim) const;
   const npy_intp* strides() const;
+  std::vector<int64_t> strides_as_int64() const;
   npy_intp strides(npy_intp dim) const;
   npy_intp itemsize() const;
   npy_intp size() const;
