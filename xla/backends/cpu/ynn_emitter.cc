@@ -687,7 +687,8 @@ absl::StatusOr<uint32_t> DefineConvolutionOp(
     CHECK_EQ(rhs_dims.size(), 4);
     // [kh, kw, ci/g, co] -> [kh, kw, ci/g, g, co/g].
     size_t filter_split[] = {feature_group_count,
-                             kernel_output_channels / feature_group_count};
+                             static_cast<size_t>(kernel_output_channels /
+                                                 feature_group_count)};
     status = ynn_define_split_dim(subgraph, /*axis=*/-1, /*num_splits=*/2,
                                   filter_split, rhs_id, &split_id, /*flags=*/0);
     if (status != ynn_status_success) {
