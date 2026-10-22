@@ -34,6 +34,7 @@ limitations under the License.
 #include "absl/types/span.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/CoreContainers.h"
 #include "llvm/ExecutionEngine/Orc/DylibManager.h"
@@ -73,6 +74,18 @@ class UnsupportedExecutorProcessControl
                                     llvm::ArrayRef<std::string> Args) override {
     llvm_unreachable("Unsupported");
   }
+
+#if LLVM_VERSION_MAJOR < 24
+  llvm::Expected<int32_t> runAsVoidFunction(
+      llvm::orc::ExecutorAddr VoidFnAddr) override {
+    llvm_unreachable("Unsupported");
+  }
+
+  llvm::Expected<int32_t> runAsIntFunction(
+      llvm::orc::ExecutorAddr IntFnAddr, int Arg) override {
+    llvm_unreachable("Unsupported");
+  }
+#endif
 
   void callWrapperAsync(llvm::orc::ExecutorAddr WrapperFnAddr,
                         IncomingWFRHandler OnComplete,

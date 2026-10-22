@@ -23,6 +23,7 @@ limitations under the License.
 #include <utility>
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/raw_ostream.h"
 #include "mhlo/IR/hlo_ops.h"
 #include "mhlo/interfaces/bufferizable_op_interface_impl.h"
@@ -35,7 +36,9 @@ limitations under the License.
 #include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.h"
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 #include "mlir/Dialect/Bufferization/IR/BufferizationTypeInterfaces.h"
+#if LLVM_VERSION_MAJOR >= 24
 #include "mlir/Dialect/Bufferization/Transforms/BufferizableOpInterfaceImpl.h"
+#endif
 #include "mlir/Dialect/Bufferization/Transforms/Bufferize.h"
 #include "mlir/Dialect/Bufferization/Transforms/FuncBufferizableOpInterfaceImpl.h"
 #include "mlir/Dialect/Bufferization/Transforms/OneShotAnalysis.h"
@@ -176,7 +179,9 @@ struct ComputeOpAndFuncBufferizePass
                     memref::MemRefDialect, mhlo::MhloDialect,
                     shape::ShapeDialect, vector::VectorDialect>();
     arith::registerBufferizableOpInterfaceExternalModels(registry);
+#if LLVM_VERSION_MAJOR >= 24
     bufferization::registerBufferizableOpInterfaceExternalModels(registry);
+#endif
     mlir::bufferization::func_ext::
         registerBufferizableOpInterfaceExternalModels(registry);
     linalg::registerBufferizableOpInterfaceExternalModels(registry);
@@ -273,7 +278,9 @@ struct OneShotBufferizePass
                     memref::MemRefDialect, mhlo::MhloDialect, scf::SCFDialect,
                     shape::ShapeDialect, vector::VectorDialect>();
     arith::registerBufferizableOpInterfaceExternalModels(registry);
+#if LLVM_VERSION_MAJOR >= 24
     bufferization::registerBufferizableOpInterfaceExternalModels(registry);
+#endif
     bufferization::func_ext::registerBufferizableOpInterfaceExternalModels(
         registry);
     linalg::registerBufferizableOpInterfaceExternalModels(registry);

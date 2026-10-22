@@ -32,6 +32,7 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/FMF.h"
 #include "llvm/IR/Function.h"
@@ -57,7 +58,9 @@ limitations under the License.
 #include "mlir/Dialect/Arith/Transforms/BufferDeallocationOpInterfaceImpl.h"
 #include "mlir/Dialect/Arith/Transforms/BufferizableOpInterfaceImpl.h"
 #include "mlir/Dialect/Bufferization/Pipelines/Passes.h"
+#if LLVM_VERSION_MAJOR >= 24
 #include "mlir/Dialect/Bufferization/Transforms/BufferizableOpInterfaceImpl.h"
+#endif
 #include "mlir/Dialect/Bufferization/Transforms/FuncBufferizableOpInterfaceImpl.h"
 #include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlow.h"
@@ -674,7 +677,9 @@ mlir::DialectRegistry FusionCompiler::CreateDialectRegistry() {
   mlir::scf::registerBufferDeallocationOpInterfaceExternalModels(registry);
 
   mlir::arith::registerBufferizableOpInterfaceExternalModels(registry);
+#if LLVM_VERSION_MAJOR >= 24
   mlir::bufferization::registerBufferizableOpInterfaceExternalModels(registry);
+#endif
   mlir::bufferization::func_ext::registerBufferizableOpInterfaceExternalModels(
       registry);
   mlir::linalg::registerBufferizableOpInterfaceExternalModels(registry);
