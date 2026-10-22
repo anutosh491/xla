@@ -417,10 +417,13 @@ class Future {
   enum class State : uint8_t { kPending, kAvailable, kError };
 
   struct WaiterAndState {
-    static_assert(alignof(std::max_align_t) >= 8 && sizeof(Waiter*) == 8);
+    // Two low pointer bits store State. This requires four-byte alignment,
+    // but does not require a 64-bit pointer (for example, wasm32 pointers are
+    // four bytes wide).
+    static_assert(alignof(Waiter) >= 4);
 
-    static constexpr uint64_t kStateMask = (1ull << 2) - 1;
-    static constexpr uint64_t kPointerMask = ~kStateMask;
+    static constexpr uintptr_t kStateMask = (uintptr_t{1} << 2) - 1;
+    static constexpr uintptr_t kPointerMask = ~kStateMask;
 
     WaiterAndState(Waiter* ptr, State state) {
       value = (reinterpret_cast<uintptr_t>(ptr) & kPointerMask) |
