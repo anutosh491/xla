@@ -1508,6 +1508,10 @@ cc_library(
     name = "user_context_registry",
     srcs = ["user_context_registry.cc"],
     hdrs = ["user_context_registry.h"],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     visibility = internal_visibility([
         ":friends",
         ":internal",
@@ -1546,6 +1550,10 @@ cc_library(
     name = "user_context_status_util",
     srcs = ["user_context_status_util.cc"],
     hdrs = ["user_context_status_util.h"],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     visibility = internal_visibility([
         ":friends",
         ":internal",

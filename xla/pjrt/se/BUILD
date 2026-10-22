@@ -72,6 +72,10 @@ cc_library(
         "buffer_sequencing_event.h",
         "local_device_state.h",
     ],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":event_pool",
         "//xla:util",
@@ -125,6 +129,10 @@ cc_library(
     name = "stream_executor_executable",
     srcs = ["stream_executor_executable.cc"],
     hdrs = ["stream_executor_executable.h"],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":stream_executor_executable_proto_cc",
         ":stream_executor_pjrt_abi_version",
@@ -203,6 +211,10 @@ cc_library(
         "se_raw_buffer.h",
         "tracked_device_buffer.h",
     ],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     visibility = internal_visibility(["//xla:friends"]),
     deps = [
         ":event_pool",

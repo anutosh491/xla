@@ -1,15 +1,30 @@
 licenses(["restricted"])
 
+load("@rules_python//python:defs.bzl", "py_library")
+
 package(default_visibility = ["//visibility:public"])
 
 alias(
     name = "numpy",
-    actual = "@pypi//numpy",
+    actual = select({
+        "//xla/tsl:emscripten": ":numpy_wasm_runtime",
+        "//conditions:default": "@pypi//numpy",
+    }),
+)
+
+# The browser runtime provides NumPy through the Emscripten environment. This
+# placeholder prevents a target-platform wheel lookup while cross-compiling
+# Python extension code; it does not replace the runtime package.
+py_library(
+    name = "numpy_wasm_runtime",
 )
 
 alias(
     name = "headers",
-    actual = "@pypi//numpy:numpy_headers",
+    actual = select({
+        "//xla/tsl:emscripten": "@emscripten_numpy_headers//:headers",
+        "//conditions:default": "@pypi//numpy:numpy_headers",
+    }),
 )
 
 genrule(

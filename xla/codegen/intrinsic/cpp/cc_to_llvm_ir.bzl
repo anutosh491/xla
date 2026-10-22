@@ -193,6 +193,7 @@ def cc_ir_header(name, src, deps = [], copts = [], **kwargs):
             match_any = [
                 "//xla/tsl:macos",
                 "//xla/tsl:windows",
+                "//xla/tsl:emscripten",
             ],
         )
 

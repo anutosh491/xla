@@ -100,7 +100,10 @@ cc_library(
     copts = [
         "-fexceptions",
         "-fno-strict-aliasing",
-    ],
+    ] + select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     features = ["-use_header_modules"],
     visibility = internal_visibility([":friends"]),
     deps = [
@@ -188,6 +191,10 @@ cc_library(
     name = "inspect_sharding",
     srcs = ["inspect_sharding.cc"],
     hdrs = ["inspect_sharding.h"],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     visibility = internal_visibility([":friends"]),
     deps = [
         "//xla:xla_data_proto_cc",
@@ -253,6 +260,10 @@ cc_library(
     name = "debug_callback_partitioner",
     srcs = ["debug_callback_partitioner.cc"],
     hdrs = ["debug_callback_partitioner.h"],
+    copts = select({
+        "//xla/tsl:emscripten": ["-fPIC"],
+        "//conditions:default": [],
+    }),
     visibility = internal_visibility([":friends"]),
     deps = [
         "//xla:shape_util",
@@ -371,6 +382,10 @@ nanobind_pywrap_extension(
 nanobind_pywrap_extension(
     name = "_hlo",
     srcs = ["hlo.cc"],
+    copts = [
+        "-fexceptions",
+        "-fno-strict-aliasing",
+    ],
     additional_stubgen_deps = [
         "//third_party/py/numpy",
     ],
@@ -414,6 +429,14 @@ nanobind_pywrap_extension(
         "@nanobind",
         "@tsl//tsl/platform:protobuf",
     ],
+)
+
+# Implementation archive used by the out-of-tree Emscripten packaging proof.
+# Keep the normal Python target unchanged.
+alias(
+    name = "_hlo_wasm_impl",
+    actual = ":_hlo_pywrap_library",
+    visibility = ["//visibility:public"],
 )
 
 pytype_strict_binary(
@@ -495,6 +518,10 @@ cc_library(
 nanobind_pywrap_extension(
     name = "_profiler",
     srcs = ["profiler.cc"],
+    copts = [
+        "-fexceptions",
+        "-fno-strict-aliasing",
+    ],
     pytype_deps = ["//third_party/py/typing_extensions"],
     pytype_srcs = ["_profiler.pyi"],
     stub_replacement_patterns = {
@@ -559,6 +586,20 @@ nanobind_pywrap_extension(
         "@tsl//tsl/platform:protobuf",
         "@tsl//tsl/profiler/protobuf:xplane_proto_cc",
     ],
+)
+
+# Implementation archives used by Emscripten side-module packaging in JAX.
+# Native extension targets remain unchanged.
+alias(
+    name = "profiler_wasm_impl",
+    actual = ":_profiler_pywrap_library",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "profile_data_wasm_impl",
+    actual = ":_profile_data_pywrap_library",
+    visibility = ["//visibility:public"],
 )
 
 py_test(
