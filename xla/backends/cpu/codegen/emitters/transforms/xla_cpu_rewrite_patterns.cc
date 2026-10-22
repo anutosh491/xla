@@ -16,6 +16,7 @@ limitations under the License.
 #include "xla/backends/cpu/codegen/emitters/transforms/xla_cpu_rewrite_patterns.h"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
@@ -64,17 +65,23 @@ static mlir::LLVM::LLVMStructType KernelDim3Type(mlir::MLIRContext* ctx) {
   return getNewOrExistingStruct(ctx, "kernel_dim3", {i64, i64, i64});
 }
 
-static mlir::LLVM::LLVMStructType KernelArgType(mlir::MLIRContext* ctx) {
-  auto ptr = mlir::LLVM::LLVMPointerType::get(ctx);
-  auto i64 = mlir::IntegerType::get(ctx, 64);
-  return getNewOrExistingStruct(ctx, "XLA_CPU_KernelArg", {ptr, i64});
+static mlir::IntegerType KernelSizeType(mlir::Operation* op) {
+  mlir::MLIRContext* ctx = op->getContext();
+  return mlir::IntegerType::get(ctx, sizeof(size_t) * 8);
 }
 
-static mlir::LLVM::LLVMStructType KernelCallFrameType(mlir::MLIRContext* ctx) {
+static mlir::LLVM::LLVMStructType KernelArgType(mlir::Operation* op) {
+  mlir::MLIRContext* ctx = op->getContext();
   auto ptr = mlir::LLVM::LLVMPointerType::get(ctx);
-  auto i64 = mlir::IntegerType::get(ctx, 64);
+  return getNewOrExistingStruct(ctx, "XLA_CPU_KernelArg",
+                                {ptr, KernelSizeType(op)});
+}
+
+static mlir::LLVM::LLVMStructType KernelCallFrameType(mlir::Operation* op) {
+  mlir::MLIRContext* ctx = op->getContext();
+  auto ptr = mlir::LLVM::LLVMPointerType::get(ctx);
   return getNewOrExistingStruct(ctx, "XLA_CPU_KernelCallFrame",
-                                {ptr, ptr, i64, ptr});
+                                {ptr, ptr, KernelSizeType(op), ptr});
 }
 
 struct LowerLoadOp : public mlir::OpRewritePattern<LoadOp> {
@@ -86,8 +93,8 @@ struct LowerLoadOp : public mlir::OpRewritePattern<LoadOp> {
     mlir::ImplicitLocOpBuilder b(op.getLoc(), rewriter);
 
     auto ptr = b.getType<mlir::LLVM::LLVMPointerType>();
-    auto kernel_call_frame = KernelCallFrameType(b.getContext());
-    auto kernel_arg = KernelArgType(b.getContext());
+    auto kernel_call_frame = KernelCallFrameType(op);
+    auto kernel_arg = KernelArgType(op);
 
     // Get a pointer to the first `KernelArg` struct.
     auto cast = mlir::UnrealizedConversionCastOp::create(b, op.getLoc(), ptr,
@@ -144,7 +151,7 @@ struct LowerExtractWorkgroupIdOp
     mlir::ImplicitLocOpBuilder builder(op.getLoc(), rewriter);
 
     auto ptr_type = builder.getType<mlir::LLVM::LLVMPointerType>();
-    auto kernel_call_frame = KernelCallFrameType(context);
+    auto kernel_call_frame = KernelCallFrameType(op);
     auto kernel_dim = KernelDim3Type(context);
     auto i64_ty = builder.getI64Type();
 

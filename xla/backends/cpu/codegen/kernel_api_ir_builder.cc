@@ -141,15 +141,17 @@ llvm::StructType* KernelWorkGroupIdTy(llvm::LLVMContext& ctx) {
 
 llvm::StructType* KernelArgTy(llvm::LLVMContext& ctx) {
   llvm::PointerType* ptr = llvm::PointerType::getUnqual(ctx);
-  llvm::IntegerType* i64 = llvm::IntegerType::getInt64Ty(ctx);
-  return llvm::StructType::create("XLA_CPU_KernelArg", ptr, i64);
+  llvm::IntegerType* size_ty =
+      llvm::IntegerType::get(ctx, sizeof(size_t) * 8);
+  return llvm::StructType::create("XLA_CPU_KernelArg", ptr, size_ty);
 }
 
 llvm::StructType* KernelCallFrameTy(llvm::LLVMContext& ctx) {
   llvm::PointerType* ptr = llvm::PointerType::getUnqual(ctx);
-  llvm::IntegerType* i64 = llvm::IntegerType::getInt64Ty(ctx);
-  return llvm::StructType::create("XLA_CPU_KernelCallFrame", ptr, ptr, i64,
-                                  ptr);
+  llvm::IntegerType* size_ty =
+      llvm::IntegerType::get(ctx, sizeof(size_t) * 8);
+  return llvm::StructType::create("XLA_CPU_KernelCallFrame", ptr, ptr,
+                                  size_ty, ptr);
 }
 
 llvm::FunctionType* KernelFunctionTy(llvm::LLVMContext& ctx) {
