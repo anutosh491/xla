@@ -497,7 +497,6 @@ cc_library(
         "//xla/pjrt:pjrt_executable",
         "//xla/pjrt:pjrt_layout",
         "//xla/pjrt:utils",
-        "//xla/pjrt/distributed:client",
         "//xla/pjrt/distributed:key_value_store_interface",
         "//xla/pjrt/distributed:protocol_proto_cc",
         "//xla/pjrt/distributed:topology_util",
@@ -554,7 +553,10 @@ cc_library(
         "@llvm-project//mlir:FuncDialect",
         "@llvm-project//mlir:IR",
         "@tsl//tsl/platform:protobuf",
-    ],
+    ] + select({
+        "//xla/tsl:emscripten": [],
+        "//conditions:default": ["//xla/pjrt/distributed:client"],
+    }),
 )
 
 cc_library(

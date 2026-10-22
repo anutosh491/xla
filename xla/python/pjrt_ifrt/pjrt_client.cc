@@ -50,10 +50,12 @@ limitations under the License.
 #include "xla/layout.h"
 #include "xla/layout_util.h"
 #include "xla/literal.h"
+#if !defined(__EMSCRIPTEN__)
 #include "xla/pjrt/distributed/client.h"
 #include "xla/pjrt/distributed/coordination/coordination_service.h"
 #include "xla/pjrt/distributed/coordination/coordination_service.pb.h"
 #include "xla/pjrt/distributed/coordination/coordination_service_agent.h"
+#endif  // !defined(__EMSCRIPTEN__)
 #include "xla/pjrt/distributed/protocol.pb.h"
 #include "xla/pjrt/distributed/topology_util.h"
 #include "xla/pjrt/host_memory_spaces.h"
@@ -924,6 +926,7 @@ absl::StatusOr<std::unique_ptr<PjRtClient>> PjRtClient::Create(
   }
 
   // Start a background thread to monitor the status of all processes.
+#if !defined(__EMSCRIPTEN__)
   if (client->distributed_client_) {
     absl::StatusOr<xla::CoordinationServiceAgent*> agent =
         client->distributed_client_->GetCoordinationServiceAgent();
@@ -939,6 +942,7 @@ absl::StatusOr<std::unique_ptr<PjRtClient>> PjRtClient::Create(
               }));
     }
   }
+#endif  // !defined(__EMSCRIPTEN__)
 
   LogDeviceSummary(client.get());
   return client;
@@ -1566,6 +1570,10 @@ CrossHostTransferKey PjRtClient::CreateNewTransferKey() {
 
 absl::Status PjRtClient::WatchGlobalProcessInfo(
     xla::CoordinationServiceAgent& agent) {
+#if defined(__EMSCRIPTEN__)
+  return absl::UnimplementedError(
+      "Distributed process monitoring is unavailable in Emscripten");
+#else
   CoordinationService::TaskId task_id = agent.task_id();
   VLOG(3) << "Watching global process info for task " << task_id;
 
@@ -1648,6 +1656,7 @@ absl::Status PjRtClient::WatchGlobalProcessInfo(
     // Update the client with the job state.
     pjrt_client_->UpdateGlobalProcessInfo(absl::MakeSpan(state));
   }
+#endif  // defined(__EMSCRIPTEN__)
 }
 
 absl::Status PjRtClient::CrossHostSendBuffers(
@@ -2045,12 +2054,17 @@ absl::Status PjRtClient::TransferFromOutfeed(PjRtDevice* device,
 
 absl::StatusOr<absl::flat_hash_map<int, IncarnationId>>
 PjRtClient::Incarnations() const {
+#if defined(__EMSCRIPTEN__)
+  return absl::UnimplementedError(
+      "Distributed process incarnations are unavailable in Emscripten");
+#else
   if (!distributed_client_) {
     return absl::FailedPreconditionError("missing distributed client");
   }
   ABSL_ASSIGN_OR_RETURN(xla::CoordinationServiceAgent * agent,
                    distributed_client_->GetCoordinationServiceAgent());
   return agent->Incarnations();
+#endif  // defined(__EMSCRIPTEN__)
 }
 
 }  // namespace ifrt
