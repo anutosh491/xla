@@ -516,17 +516,12 @@ nanobind_pywrap_extension(
         "//xla/backends/profiler:profiler_backends",
         "//xla/backends/profiler/cpu:python_tracer",
         "//xla/backends/profiler/plugin:plugin_tracer",
-        "//xla/backends/profiler/subprocess:subprocess_profiler",
-        "//xla/backends/profiler/subprocess:subprocess_registry",
         "//xla/backends/profiler/util:metadata_registry",
         "//xla/pjrt:exceptions",
         "//xla/pjrt:status_casters",
         "//xla/pjrt/c:pjrt_c_api_hdrs",
         "//xla/python/profiler:profile_data_lib",
         "//xla/tsl/platform:macros",
-        "//xla/tsl/profiler/rpc:profiler_server_impl",
-        "//xla/tsl/profiler/rpc/client:capture_profile",
-        "//xla/tsl/profiler/rpc/client:profiler_client_impl",
         "//xla/tsl/profiler/utils:xplane_schema",
         "@tsl//tsl/platform:protobuf",
         "@tsl//tsl/profiler/lib:profiler_session",
@@ -534,7 +529,16 @@ nanobind_pywrap_extension(
         "@tsl//tsl/profiler/protobuf:profiled_instructions_proto_cc",
         "@tsl//tsl/profiler/protobuf:profiler_options_proto_cc",
         "@tsl//tsl/profiler/protobuf:xplane_proto_cc",
-    ],
+    ] + select({
+        "//xla/tsl:emscripten": [],
+        "//conditions:default": [
+            "//xla/backends/profiler/subprocess:subprocess_profiler",
+            "//xla/backends/profiler/subprocess:subprocess_registry",
+            "//xla/tsl/profiler/rpc:profiler_server_impl",
+            "//xla/tsl/profiler/rpc/client:capture_profile",
+            "//xla/tsl/profiler/rpc/client:profiler_client_impl",
+        ],
+    }),
 )
 
 nanobind_pywrap_extension(

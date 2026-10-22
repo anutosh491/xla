@@ -30,7 +30,9 @@ limitations under the License.
 #include "nanobind/stl/string_view.h"  // IWYU pragma: keep
 #include "nanobind/stl/unique_ptr.h"  // IWYU pragma: keep
 #include "nanobind/stl/vector.h"  // IWYU pragma: keep
+#if !defined(__EMSCRIPTEN__)
 #include "xla/backends/profiler/subprocess/subprocess_registry.h"
+#endif
 #include "xla/backends/profiler/util/metadata_registry.h"
 #include "xla/pjrt/c/pjrt_c_api.h"
 #include "xla/pjrt/exceptions.h"
@@ -40,8 +42,10 @@ limitations under the License.
 #include "xla/python/profiler_utils.h"
 #include "xla/python/xplane_to_profile_instructions.h"
 #include "xla/tsl/platform/macros.h"
+#if !defined(__EMSCRIPTEN__)
 #include "xla/tsl/profiler/rpc/client/capture_profile.h"
 #include "xla/tsl/profiler/rpc/profiler_server.h"
+#endif
 #include "tsl/platform/protobuf.h"
 #include "tsl/profiler/lib/profiler_session.h"
 #include "tsl/profiler/lib/traceme.h"
@@ -152,6 +156,7 @@ static std::string GetFdoProfile(const std::string& xspace,
 }
 
 NB_MODULE(_profiler, m) {
+#if !defined(__EMSCRIPTEN__)
   nb::class_<tsl::profiler::ProfilerServer> profiler_server_class(
       m, "ProfilerServer");
   m.def(
@@ -162,6 +167,15 @@ NB_MODULE(_profiler, m) {
         return server;
       },
       nb::arg("port"));
+#else
+  m.def(
+      "start_server",
+      [](int) {
+        throw xla::XlaRuntimeError(
+            "Remote profiler servers are unavailable in Emscripten");
+      },
+      nb::arg("port"));
+#endif
   m.def(
       "register_plugin_profiler",
       [](nb::capsule c_api) -> void {
@@ -179,6 +193,7 @@ NB_MODULE(_profiler, m) {
         ") -> None"
           // clang-format on
           ));
+#if !defined(__EMSCRIPTEN__)
   m.def(
       "register_subprocess",
       [](int pid, int port) -> nb::object {
@@ -194,6 +209,15 @@ NB_MODULE(_profiler, m) {
       nb::arg("pid"), nb::arg("port"),
       nb::sig("def register_subprocess(pid: int, port: int) -> "
               "collections.abc.Callable[[], None]"));
+#else
+  m.def(
+      "register_subprocess",
+      [](int, int) {
+        throw xla::XlaRuntimeError(
+            "Subprocess profiling is unavailable in Emscripten");
+      },
+      nb::arg("pid"), nb::arg("port"));
+#endif
 
   nb::class_<ProfilerSessionWrapper> profiler_session_class(m,
                                                             "ProfilerSession");
@@ -212,6 +236,7 @@ NB_MODULE(_profiler, m) {
       .def(
           "stop_and_export",
           [](ProfilerSessionWrapper* sess, const std::string& tensorboard_dir) {
+#if !defined(__EMSCRIPTEN__)
             if (sess->session->IsContinuousProfilingEnabled()) {
               xla::ThrowIfError(sess->session->Stop());
               std::vector<tensorflow::profiler::XSpace> xspaces =
@@ -238,6 +263,11 @@ NB_MODULE(_profiler, m) {
                     /* also_export_trace_json= */ true));
               }
             }
+#else
+            throw xla::XlaRuntimeError(
+                "TensorBoard profile export is unavailable in Emscripten; "
+                "use stop() to retrieve the profile data");
+#endif
           },
           nb::call_guard<nb::gil_scoped_release>())
       .def("stop",
@@ -265,6 +295,7 @@ NB_MODULE(_profiler, m) {
           nb::sig("def stop_and_get_profile_data() -> ProfileData"))
       .def("export", [](ProfilerSessionWrapper* sess, nb::bytes xspace,
                         const std::string& tensorboard_dir) {
+#if !defined(__EMSCRIPTEN__)
         tensorflow::profiler::XSpace xspace_proto;
         absl::string_view bytes(xspace.c_str(), xspace.size());
         nb::gil_scoped_release release;
@@ -272,6 +303,10 @@ NB_MODULE(_profiler, m) {
         xla::ThrowIfError(tsl::profiler::ExportToTensorBoard(
             xspace_proto, tensorboard_dir,
             /* also_export_trace_json= */ true));
+#else
+        throw xla::XlaRuntimeError(
+            "TensorBoard profile export is unavailable in Emscripten");
+#endif
       });
 
   nb::class_<tensorflow::ProfileOptions> profile_options_class(
