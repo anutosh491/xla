@@ -579,6 +579,24 @@ cc_library(
 )
 
 cc_library(
+    name = "wasm_function_library",
+    srcs = ["wasm_function_library.cc"],
+    hdrs = ["wasm_function_library.h"],
+    deps = [
+        ":aot_compiled_function_library",
+        ":wasm_object_linker",
+        "//xla/backends/cpu/runtime:function_library",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "object_loader",
     srcs = ["object_loader.cc"],
     hdrs = ["object_loader.h"],
@@ -812,5 +830,21 @@ py_test(
         "//xla/codegen/testlib",
         "@absl_py//absl/testing:absltest",
         "@absl_py//absl/testing:parameterized",
+    ],
+)
+
+cc_library(
+    name = "wasm_object_linker",
+    srcs = ["wasm_object_linker.cc"],
+    hdrs = ["wasm_object_linker.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@llvm-project//lld:Common",
+        "@llvm-project//lld:Wasm",
+        "@llvm-project//llvm:Object",
+        "@llvm-project//llvm:Support",
     ],
 )

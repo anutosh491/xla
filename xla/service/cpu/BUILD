@@ -399,6 +399,7 @@ cc_library(
         "@llvm-project//llvm:X86CodeGen",  # fixdeps: keep
     ]) + select({
         "//xla/tsl:emscripten": [
+            "//xla/backends/cpu/codegen:wasm_function_library",
             "@llvm-project//llvm:WebAssemblyCodeGen",  # fixdeps: keep
         ],
         "//conditions:default": [],
@@ -1859,6 +1860,7 @@ cc_library(
     srcs = ["cpu_aot_loader.cc"],
     hdrs = ["cpu_aot_loader.h"],
     deps = [
+        "//xla/backends/cpu/codegen:wasm_function_library",
         ":cpu_aot_compilation_result",
         ":executable_proto_cc",
         "//xla:util",

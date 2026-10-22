@@ -93,6 +93,9 @@ limitations under the License.
 #include "xla/backends/cpu/codegen/ir_compiler.h"
 #include "xla/backends/cpu/codegen/jit_compiler.h"
 #include "xla/backends/cpu/codegen/target_machine_features.h"
+#ifdef __EMSCRIPTEN__
+#include "xla/backends/cpu/codegen/wasm_function_library.h"
+#endif
 #include "xla/backends/cpu/constant_allocation.h"
 #include "xla/backends/cpu/runtime/function_library.h"
 #include "xla/backends/cpu/runtime/thunk.h"
@@ -1684,9 +1687,9 @@ class AotLlvmMultipleModuleCompiler : public LlvmMultipleModuleCompiler {
     // are currently linking.
     if (llvm_module_ == nullptr) {
       // We assume the first module is the main module to link into.
-      ABSL_ASSIGN_OR_RETURN(llvm_module_,
-                       CopyLlvmModuleToLocalContext(*llvm_context_,
-                                                    *tsm.getModuleUnlocked()));
+      ABSL_ASSIGN_OR_RETURN(
+          llvm_module_, CopyLlvmModuleToLocalContext(*llvm_context_,
+                                                     *tsm.getModuleUnlocked()));
       linker_ = std::make_unique<llvm::Linker>(*llvm_module_);
       return absl::OkStatus();
     }
@@ -1789,17 +1792,23 @@ CpuCompiler::CompileCpuExecutable(
 
   std::unique_ptr<LlvmMultipleModuleCompiler> llvm_module_compiler;
 
-  // We don't want to JIT in AOT compilation mode.
-  if (!thunk_emitter_options.is_aot_compilation) {
+  // Emscripten links and loads emitted objects instead of using ORC.
+#ifdef __EMSCRIPTEN__
+  constexpr bool use_native_jit_compiler = false;
+#else
+  const bool use_native_jit_compiler =
+      !thunk_emitter_options.is_aot_compilation;
+#endif
+  if (use_native_jit_compiler) {
     // Options for orchestrating the JIT compilation process.
     JitCompiler::Options jit_compiler_options{
         /*num_dylibs=*/parallel_codegen_split_count,
         /*definition_generator=*/std::move(definition_generator),
     };
     ABSL_ASSIGN_OR_RETURN(auto jit_compiler,
-                     JitCompiler::Create(std::move(jit_compiler_options),
-                                         std::move(ir_compiler),
-                                         GetCompilationTaskRunner()));
+                          JitCompiler::Create(std::move(jit_compiler_options),
+                                              std::move(ir_compiler),
+                                              GetCompilationTaskRunner()));
     llvm_module_compiler = std::make_unique<JitLlvmMultipleModuleCompiler>(
         std::move(jit_compiler));
   } else {
@@ -2108,6 +2117,15 @@ CpuCompiler::CompileCpuExecutable(
 
   std::string data_layout =
       target_machine->createDataLayout().getStringRepresentation();
+
+#ifdef __EMSCRIPTEN__
+  if (!thunk_emitter_options.is_aot_compilation) {
+    ABSL_ASSIGN_OR_RETURN(
+        function_library,
+        LoadFunctionLibrary(compiled_symbols, obj_files, module.get(),
+                            target_machine_options, data_layout));
+  }
+#endif
 
   ABSL_ASSIGN_OR_RETURN(
       auto cpu_executable,
