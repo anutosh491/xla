@@ -58,6 +58,7 @@ def _llvm_extension_impl(mctx):  # @unused
             "SystemZ",
             "X86",
             "SPIRV",
+            "WebAssembly",
         ],
     )
 

@@ -39,6 +39,7 @@ limitations under the License.
 namespace xla::codegen::intrinsics {
 
 enum class DeviceType {
+  kGenericCpu,
   kAmdCpu,
   kIntelCpu,
   kIntelGpu,
